@@ -1,0 +1,53 @@
+[
+    {
+        "id": 1,
+        "titre": "Clou de giroffe",
+        "vêtu medicinal et mystique": "Traitement de problème de dents: à utiliser comme bain de bouches. -Traitement des infections: infuser dans une théière et prendre matin et soir- Brûlez des clous de girofle pour attirer l’amour, l’argent et chasser les énergies négatives dans votre maison."
+    },
+    
+    {
+        "id": 2,
+        "titre": "Ejaculation precoce",
+        "Traitement": "Citronniers (racines + feuilles + fruits) bouillir 15 minutes Prendre 3 fois par jour moitié d’un gobelet"
+    },
+    
+    {
+        "id": 3,
+        "titre": "Prostate",
+        "Traitement": "Feuilles de coton + petit cola + tomi+ miel Preparer et boire."
+
+    },
+    
+    {
+    "id": 4,
+    "titre": "Cholera",
+   "Traitement": "Prenez trois cuillères à café de sel et une cuillère à café de sucre, ajoutez une demi-cuillère de gin sec. Buvez le tout en une seule dose. Le choléra s'arrêtera immédiatement."
+   
+}, 
+
+{
+   "id": 5,
+   "titre": "Pneumonie",
+   "Traitement": "Obtenez une poignée d'ail, broyez pour extraire le jus. Buvez une cuillère et utilisez le jus pour frotter la poitrine et le dos. Cela clôturera le chapitre." 
+},
+{
+    "id": 6,
+    "titre": "FAIBLE NOMBRE DE SPERMATOZOÏDES",
+    "traitement": "Obtenez une grande quantité de feuilles de goyave, pilez, ajoutez de l'eau et filtrez. Buvez une tasse en verre trois fois par jour pendant 1 semaine. Pendant que vous en prenez, mangez des carottes et du concombre quotidiennement pendant 2 semaines."
+},
+{
+    "id": 7,
+    "titre": "Arrêt cardiaque",
+        "traitement": "Broyer 12 bulbes d'oignons et 12 bulbes d'ail ensemble. Obtenez 3 bouteilles de miel, mélangez ensemble. Prendre 2 cuillères trois fois par jour pendant 2 semaines."
+},
+{
+  "id": 8,
+  "titre": "Insomnie",
+  "Traitement": "ajoutez 3 cuillères de miel dans une tasse de lait en verre. Prenez tout au coucher pendant une semaine."
+},
+{
+    "id": 9,
+    "titre": "Cassure des cheveux",
+    "traitement": "Obtenez une bouteille d'huile d'olive et une bouteille de miel. Mélangez et réchauffez pendant quelques minutes. Utilisez le mélange pour laver vos cheveux." 
+}
+]
