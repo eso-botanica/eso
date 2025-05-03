@@ -345,41 +345,31 @@
         height: 200px;
         padding: 10px;
     }
-    .image-scroller-container {
-    width: 100%;
-    overflow: hidden;
-    position: relative;
-    margin: 20px 0;
-}
-
-.image-scroller {
-    display: flex;
-    gap: 15px; /* Espacement entre les images */
-    animation: scroll 30s linear infinite;
-    padding: 10px 0;
-}
-
-.image-scroller img {
-    height: 200px; /* Hauteur fixe pour toutes les images */
-    width: 100%; /* Largeur ajustée pour conserver les proportions */
-    object-fit: cover;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-
-@keyframes scroll {
-    0% {
-        transform: translateX(0);
-    }
-    100% {
-        transform: translateX(-50%); /* Ajustez ce pourcentage en fonction du nombre d'images */
-    }
-}
-
-/* Pause au survol */
-.image-scroller-container:hover .image-scroller {
-    animation-play-state: continued;
-}
+          .slider-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .slider {
+            display: flex;
+            transition: transform 0.5s ease-in-out;
+            height: 290px;
+        }
+        
+        .slide {
+            min-width: 100%;
+        }
+        
+        .slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
 /* Style du chatbot */
         .chatbot-container {
             position: fixed;
@@ -566,15 +556,20 @@
     </div>
     
     <div class="separator"></div>
-       <div class="image-scroller-container">
-    <div class="image-scroller">
-       
-        <img src="voy.jpg" alt="voyance">
-        <img src="at.jpg" alt="athamé">
-        <img src="loa.jpg" alt="loas">
-     
-        <!-- Dupliquez ces lignes pour plus d'images si nécessaire -->
+          <div class="slider-container">
+        <div class="slider">
+            <div class="slide">
+                <img src="at.jpg" alt="Image AT">
+            </div>
+            <div class="slide">
+                <img src="voy.jpg" alt="Image VOY">
+            </div>
+            <div class="slide">
+                <img src="loa.jpg" alt="Image LOA">
+            </div>
+        </div>
     </div>
+
     <div class="content">
         <div class="content-item">
             <div class="content-text">
@@ -749,45 +744,29 @@ Ces instruments reflètent l’idée que la magie ne repose pas seulement sur de
             const opacity = 0.7 + Math.random() * 0.3;
             flame.style.opacity = opacity;
         }, 100);
-        function changeSlide() {
-        const slides = document.querySelectorAll('.slide');
-        let current = document.querySelector('.slide.active');
-        
-        current.classList.remove('active');
-        
-        if (current.nextElementSibling && current.nextElementSibling.classList.contains('slide')) {
-            current.nextElementSibling.classList.add('active');
-        } else {
-            slides[0].classList.add('active');
-        }
-    }
 
-    // Chanje imaj chak 3 segond (3000ms)
-    setInterval(changeSlide, 3000);
-    document.addEventListener('DOMContentLoaded', function() {
-    const scroller = document.querySelector('.image-scroller');
-    
-    // Duplique les images pour un défilement infini fluide
-    scroller.innerHTML += scroller.innerHTML;
-    
-    // Ajuste la vitesse en fonction de la largeur
-    const images = document.querySelectorAll('.image-scroller img');
-    const totalWidth = Array.from(images).reduce((acc, img) => acc + img.offsetWidth + 15, 0);
-    const duration = totalWidth / 30; // Ajustez le diviseur pour changer la vitesse
-    
-    document.styleSheets[0].insertRule(`
-        @keyframes scroll {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-${totalWidth/0.5}px); }
-        }
-    `, document.styleSheets[0].cssRules.length);
-    
-    document.styleSheets[0].insertRule(`
-        .image-scroller {
-            animation: scroll ${duration}s linear infinite;
-        }
-    `, document.styleSheets[0].cssRules.length);
-});
+                document.addEventListener('DOMContentLoaded', function() {
+            const slider = document.querySelector('.slider');
+            const slides = document.querySelectorAll('.slide');
+            const totalSlides = slides.length;
+            
+            let currentIndex = 0;
+            const slideDuration = 3000; // 3 secondes par image
+            
+            function showNextSlide() {
+                currentIndex++;
+                
+                // Si on arrive à la fin, on revient à la première image
+                if (currentIndex >= totalSlides) {
+                    currentIndex = 0;
+                }
+                
+                slider.style.transform = `translateX(-${currentIndex * 100}%)`;
+            }
+            
+            // Démarrer le défilement automatique
+            setInterval(showNextSlide, slideDuration);
+        });
      // Données pour le chatbot
         const cartesSignifications = {
             1: "Le Magicien: Vous avez le pouvoir de créer votre réalité.",
