@@ -4,122 +4,141 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Recherche Protégée</title>
- <style>
-     body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    background-image: url('verdure.jpeg');
-}
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-image: url('verdure.jpeg');
+        }
 
-.container {
-    max-width: 800px;
-    margin: 50px auto;
-    padding: 20px;
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    text-align: center;
-}
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
 
-h1 {
-    color: #333;
-}
+        h1 {
+            color: #333;
+        }
 
-.search-box {
-    margin: 30px 0;
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-}
+        .search-box {
+            margin: 30px 0;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
 
-#search-input {
-    padding: 10px;
-    width: 60%;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 16px;
-}
+        #search-input {
+            padding: 10px;
+            width: 60%;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
 
-button {
-    padding: 10px 20px;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 16px;
-}
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
 
-button:hover {
-    background-color: #45a049;
-}
+        button:hover {
+            background-color: #45a049;
+        }
 
-.dialog {
-    display: none;
-    position: fixed;
-    z-index: 1;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-}
+        .dialog {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
 
-.dialog-content {
-    background-color: white;
-    margin: 15% auto;
-    padding: 20px;
-    border-radius: 8px;
-    width: 50%;
-    max-width: 500px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    text-align: center;
-}
+        .dialog-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 50%;
+            max-width: 500px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
 
-.close-btn {
-    float: right;
-    font-size: 24px;
-    font-weight: bold;
-    cursor: pointer;
-}
+        .close-btn {
+            float: right;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+        }
 
-.close-btn:hover {
-    color: #aaa;
-}
+        .close-btn:hover {
+            color: #aaa;
+        }
 
-#password-input {
-    padding: 10px;
-    width: 80%;
-    margin: 20px 0;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 16px;
-}
+        #password-input {
+            padding: 10px;
+            width: 80%;
+            margin: 20px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
 
-#search-results {
-    margin-top: 20px;
-    text-align: left;
-}
+        #search-results {
+            margin-top: 20px;
+            text-align: left;
+        }
 
-.result-item {
-    padding: 10px;
-    border-bottom: 1px solid #eee;
-}
+        .result-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
 
-.hidden {
-    display: none;
-}
+        .hidden {
+            display: none;
+        }
 
-.error {
-    color: red;
-    margin-top: 10px;
-}
- </style>
+        .error {
+            color: red;
+            margin-top: 10px;
+        }
+
+        .paypal-container {
+            margin: 20px 0;
+        }
+
+        .highlight {
+            background-color: yellow;
+        }
+
+        .access-options {
+            margin: 20px 0;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
         <h1>Traitement naturel</h1>
+        
+        <div class="access-options">
+            <h3>Accédez à notre base de données complète</h3>
+            <div id="paypal-button-container" class="paypal-container"></div>
+            <p>Ou utilisez votre mot de passe existant</p>
+        </div>
+        
         <div class="search-box">
             <input type="text" id="search-input" placeholder="Entrez votre recherche...">
             <button id="search-btn">Rechercher</button>
@@ -137,93 +156,135 @@ button:hover {
         </div>
     </div>
 
+    <!-- Intégration du SDK PayPal -->
+    <script src="https://www.paypal.com/sdk/js?client-id=VOTRE_CLIENT_ID&currency=EUR"></script>
+    
     <script>
-        // Données de recherche (normalement chargées depuis un fichier JSON)
-let searchData = [];
+        // Données de recherche
+        let searchData = [];
+        let paymentCompleted = false;
 
-// Mot de passe (à changer pour la production)
-const PASSWORD = "@      .";
+        // Charger les données depuis le fichier JSON
+        fetch('data.json')
+            .then(response => response.json())
+            .then(data => {
+                searchData = data;
+            })
+            .catch(error => {
+                console.error('Erreur de chargement du fichier JSON:', error);
+            });
 
-// Charger les données depuis le fichier JSON
-fetch('data.json')
-    .then(response => response.json())
-    .then(data => {
-        searchData = data;
-    })
-    .catch(error => {
-        console.error('Erreur de chargement du fichier JSON:', error);
-    });
+        // Éléments du DOM
+        const searchInput = document.getElementById('search-input');
+        const searchBtn = document.getElementById('search-btn');
+        const passwordDialog = document.getElementById('password-dialog');
+        const passwordInput = document.getElementById('password-input');
+        const submitPassword = document.getElementById('submit-password');
+        const searchResults = document.getElementById('search-results');
+        const closeBtn = document.querySelector('.close-btn');
 
-// Éléments du DOM
-const searchInput = document.getElementById('search-input');
-const searchBtn = document.getElementById('search-btn');
-const passwordDialog = document.getElementById('password-dialog');
-const passwordInput = document.getElementById('password-input');
-const submitPassword = document.getElementById('submit-password');
-const searchResults = document.getElementById('search-results');
-const closeBtn = document.querySelector('.close-btn');
-
-// Ouvrir la boîte de dialogue de recherche
-searchBtn.addEventListener('click', () => {
-    const query = searchInput.value.trim();
-    if (query) {
-        passwordDialog.style.display = 'block';
-        // Cache les résultats jusqu'à ce que le mot de passe soit validé
-        searchResults.classList.add('hidden');
-        passwordInput.value = '';
-        passwordInput.focus();
-    }
-});
-
-// Fermer la boîte de dialogue
-closeBtn.addEventListener('click', () => {
-    passwordDialog.style.display = 'none';
-});
-
-// Valider le mot de passe
-submitPassword.addEventListener('click', () => {
-    if (passwordInput.value === PASSWORD) {
-        // Afficher les résultats de recherche
-        displaySearchResults(searchInput.value.trim());
-        searchResults.classList.remove('hidden');
-    } else {
-        alert('Mot de passe incorrect!');
-        passwordInput.value = '';
-        passwordInput.focus();
-    }
-});
-
-// Fonction pour afficher les résultats de recherche
-function displaySearchResults(query) {
-    const results = searchData.filter(item => {
-        // Recherche dans tous les champs texte de l'objet
-        return Object.values(item).some(value => 
-            String(value).toLowerCase().includes(query.toLowerCase())
-        );
-    });
-
-    if (results.length > 0) {
-        let html = '<h3>Résultats de recherche:</h3>';
-        results.forEach(item => {
-            html += '<div class="result-item">';
-            for (const [key, value] of Object.entries(item)) {
-                html += `<p><strong>${key}:</strong> ${highlightQuery(value, query)}</p>`;
+        // Configuration PayPal
+        paypal.Buttons({
+            createOrder: function(data, actions) {
+                return actions.order.create({
+                    purchase_units: [{
+                        amount: {
+                            value: '10.00' // Montant de la transaction
+                        },
+                        description: "Accès à la base de données des traitements naturels"
+                    }]
+                });
+            },
+            onApprove: function(data, actions) {
+                return actions.order.capture().then(function(details) {
+                    // Après paiement réussi
+                    alert('Paiement réussi! Vous pouvez maintenant accéder au contenu.');
+                    paymentCompleted = true;
+                    
+                    // Stocker en session que l'utilisateur a payé
+                    sessionStorage.setItem('paidAccess', 'true');
+                    
+                    // Ouvrir directement la recherche si un terme est saisi
+                    if(searchInput.value.trim()) {
+                        displaySearchResults(searchInput.value.trim());
+                        passwordDialog.style.display = 'block';
+                        searchResults.classList.remove('hidden');
+                    }
+                });
+            },
+            onError: function(err) {
+                console.error('Erreur PayPal:', err);
+                alert('Une erreur est survenue lors du paiement.');
             }
-            html += '</div>';
+        }).render('#paypal-button-container');
+
+        // Ouvrir la boîte de dialogue de recherche
+        searchBtn.addEventListener('click', () => {
+            const query = searchInput.value.trim();
+            if (query) {
+                // Vérifier si l'utilisateur a payé ou a le mot de passe
+                if(paymentCompleted || sessionStorage.getItem('paidAccess')) {
+                    displaySearchResults(query);
+                    passwordDialog.style.display = 'block';
+                    searchResults.classList.remove('hidden');
+                } else {
+                    passwordDialog.style.display = 'block';
+                    searchResults.classList.add('hidden');
+                    passwordInput.value = '';
+                    passwordInput.focus();
+                }
+            }
         });
-        searchResults.innerHTML = html;
-    } else {
-        searchResults.innerHTML = '<p>Aucun résultat trouvé.</p>';
-    }
-}
 
-// Fonction pour mettre en évidence la recherche dans les résultats
-function highlightQuery(text, query) {
-    if (typeof text !== 'string') return text;
+        // Fermer la boîte de dialogue
+        closeBtn.addEventListener('click', () => {
+            passwordDialog.style.display = 'none';
+        });
 
-    const regex = new RegExp(query, 'gi');
-    return text.replace(regex, match => `<span class="highlight">${match}</span>`);
-}
+        // Valider le mot de passe
+        submitPassword.addEventListener('click', () => {
+            if (passwordInput.value === "@      .") { // Remplacez par votre mot de passe
+                // Afficher les résultats de recherche
+                displaySearchResults(searchInput.value.trim());
+                searchResults.classList.remove('hidden');
+                paymentCompleted = true;
+                sessionStorage.setItem('paidAccess', 'true');
+            } else {
+                alert('Mot de passe incorrect!');
+                passwordInput.value = '';
+                passwordInput.focus();
+            }
+        });
+
+        // Fonction pour afficher les résultats de recherche
+        function displaySearchResults(query) {
+            const results = searchData.filter(item => {
+                return Object.values(item).some(value => 
+                    String(value).toLowerCase().includes(query.toLowerCase())
+                );
+            });
+
+            if (results.length > 0) {
+                let html = '<h3>Résultats de recherche:</h3>';
+                results.forEach(item => {
+                    html += '<div class="result-item">';
+                    for (const [key, value] of Object.entries(item)) {
+                        html += `<p><strong>${key}:</strong> ${highlightQuery(value, query)}</p>`;
+                    }
+                    html += '</div>';
+                });
+                searchResults.innerHTML = html;
+            } else {
+                searchResults.innerHTML = '<p>Aucun résultat trouvé.</p>';
+            }
+        }
+
+        // Fonction pour mettre en évidence la recherche dans les résultats
+        function highlightQuery(text, query) {
+            if (typeof text !== 'string') return text;
+            const regex = new RegExp(query, 'gi');
+            return text.replace(regex, match => `<span class="highlight">${match}</span>`);
+        }
     </script>
 </body>
 </html>
