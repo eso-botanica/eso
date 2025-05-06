@@ -343,6 +343,13 @@
             const regex = new RegExp(query, 'gi');
             return text.replace(regex, match => `<span class="highlight">${match}</span>`);
         }
+        // Mobile menu toggle
+        const menuBtn = document.querySelector('.menu-btn');
+        const navLinks = document.querySelector('.nav-links');
+        
+        menuBtn.addEventListener('click', () => {
+            navLinks.classList.toggle('active');
+        });
     </script>
 </body>
 </html>
