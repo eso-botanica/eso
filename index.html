@@ -523,9 +523,70 @@
             display: flex;
             align-items: center;
             gap: 20px;
+#ad-container {
+            position: fixed;
+            top: -300px; /* Kache anlè paj la */
+            left: 20px;
+            width: 300px;
+            height: 250px;
+            overflow: hidden;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+            border-radius: 5px;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.1);
+            transition: top 0.5s ease-in-out;
+        }
+        
+        #ad-container.visible {
+            top: 20px; /* Montre nan pozisyon final la */
+        }
+        
+        #ad-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        #close-ad {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(0,0,0,0.5);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        #ad-icon {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            z-index: 1000;
+            display: none;
+            border-radius: 50%;
+            box-shadow: 0 0 5px rgba(0,0,0,0.2);
+        }
+    
     </style>
 </head>
 <body>
+ <!-- Piblisite a -->
+    <div id="ad-container">
+        <button id="close-ad">×</button>
+        <img id="ad-image" src="pub1.jpg" alt="Piblisite">
+    </div>
+    
+    <!-- Ikon piblisite a nan tèt paj la -->
+    <img id="ad-icon" src="pub1.jpg" alt="Piblisite">
+    
+    
       <header>
         <div class="header-container">
             <div class="logo">
@@ -996,6 +1057,51 @@ Livraisons effectuées par messagers ailés (ou nos partenaires postaux).</p>
         menuBtn.addEventListener('click', () => {
             navLinks.classList.toggle('active');
         });
+
+        // Eleman yo
+        const adContainer = document.getElementById('ad-container');
+        const adImage = document.getElementById('ad-image');
+        const closeAdBtn = document.getElementById('close-ad');
+        const adIcon = document.getElementById('ad-icon');
+        
+        // Fonksyon pou montre piblisite a ak animasyon glise
+        function showAd() {
+            adContainer.classList.add('visible');
+            adIcon.style.display = 'none';
+            
+            // Reyajiste timer pou pwochen afichaj
+            setTimeout(() => {
+                adContainer.classList.remove('visible');
+                setTimeout(showAd, 10000); // 10 segond
+            }, 5000); // Retire piblisite a apre 5 segond
+        }
+        
+        // Fonksyon pou fèmen piblisite a
+        function closeAd() {
+            adContainer.classList.remove('visible');
+            adIcon.style.display = 'block';
+            
+            // Reyajiste timer pou pwochen afichaj
+            setTimeout(showAd, 10000);
+        }
+        
+        // Evènman pou bouton fèmen
+        closeAdBtn.addEventListener('click', closeAd);
+        
+        // Evènman pou ikon an
+        adIcon.addEventListener('click', function() {
+            adContainer.classList.add('visible');
+            adIcon.style.display = 'none';
+            
+            // Reyajiste timer pou retire piblisite a
+            setTimeout(() => {
+                adContainer.classList.remove('visible');
+                setTimeout(showAd, 10000);
+            }, 5000);
+        });
+        
+        // Kòmanse pwosesis la apre 10 segond
+        setTimeout(showAd, 10500);
     </script>
 </body>
 </html>
