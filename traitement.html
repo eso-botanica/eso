@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traitements Naturels Premium</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-image: url('verdure.jpeg');
+            background-size: cover;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 30px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+
+        .search-box {
+            margin: 30px 0;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        #search-input {
+            padding: 12px;
+            width: 70%;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 12px 25px;
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #219653;
+        }
+
+        #search-results {
+            margin-top: 30px;
+            text-align: left;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .result-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .highlight {
+            background-color: #fffde7;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        .paywall-message {
+            background-color: #f8f9fa;
+            padding: 25px;
+            border-radius: 8px;
+            margin: 30px 0;
+            border: 1px solid #e1e1e1;
+        }
+
+        .price {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin: 15px 0;
+        }
+
+        .paypal-button-container {
+            min-height: 50px;
+            margin: 20px 0;
+        }
+
+        .search-instructions {
+            color: #7f8c8d;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Traitements Naturels Premium</h1>
+        
+        <div class="search-instructions">
+            <p>Recherchez dans notre base de données, puis payez pour voir les résultats complets</p>
+        </div>
+        
+        <div class="search-box">
+            <input type="text" id="search-input" placeholder="Rechercher un traitement...">
+            <button id="search-btn">Rechercher</button>
+        </div>
+
+        <div id="paywall" class="paywall-message hidden">
+            <h2>Accédez aux résultats complets</h2>
+            <p>Pour voir les détails de votre recherche, veuillez effectuer le paiement</p>
+            <div class="price">10,00 €</div>
+            <div id="paypal-button-container" class="paypal-button-container"></div>
+        </div>
+
+        <div id="search-results" class="hidden"></div>
+    </div>
+
+    <!-- Intégration du SDK PayPal -->
+    <script src="https://www.paypal.com/sdk/js?client-id=AVW34g92Fpl_-QrqDTb4lxblq2k41ZUyZVyp2Llx5QrKc3JzNtzsPR1_z3xi0rEhUu8vuvxXk_O9K3yJ&currency=EUR"></script>
+    
+    <script>
+        // Données de recherche
+        let searchData = [];
+        let currentQuery = "";
+        let paidAccess = localStorage.getItem('paidAccess') === 'true';
+
+        // Charger les données depuis le fichier JSON
+        fetch('data.json')
+            .then(response => response.json())
+            .then(data => {
+                searchData = data;
+            })
+            .catch(error => {
+                console.error('Erreur de chargement des données:', error);
+            });
+
+        // Configuration PayPal
+        paypal.Buttons({
+            style: {
+                shape: 'rect',
+                color: 'gold',
+                layout: 'vertical',
+                label: 'paypal'
+            },
+            createOrder: function(data, actions) {
+                return actions.order.create({
+                    purchase_units: [{
+                        amount: {
+                            value: '10.00',
+                            breakdown: {
+                                item_total: {
+                                    value: '10.00',
+                                    currency_code: 'EUR'
+                                }
+                            }
+                        },
+                        items: [
+                            {
+                                name: "Accès aux résultats de recherche",
+                                description: "Détails complets pour: " + currentQuery,
+                                quantity: "1",
+                                unit_amount: {
+                                    value: '10.00',
+                                    currency_code: 'EUR'
+                                }
+                            }
+                        ]
+                    }]
+                });
+            },
+            onApprove: function(data, actions) {
+                return actions.order.capture().then(function(details) {
+                    // Paiement réussi
+                    localStorage.setItem('paidAccess', 'true');
+                    paidAccess = true;
+                    displaySearchResults(currentQuery);
+                });
+            },
+            onError: function(err) {
+                console.error('Erreur PayPal:', err);
+                alert("Une erreur est survenue lors du paiement. Veuillez réessayer.");
+            }
+        }).render('#paypal-button-container');
+
+        // Gestion de la recherche
+        document.getElementById('search-btn').addEventListener('click', function() {
+            currentQuery = document.getElementById('search-input').value.trim();
+            if(currentQuery) {
+                if(paidAccess) {
+                    displaySearchResults(currentQuery);
+                } else {
+                    document.getElementById('paywall').classList.remove('hidden');
+                    document.getElementById('search-results').classList.add('hidden');
+                }
+            }
+        });
+
+        // Fonction pour afficher les résultats
+        function displaySearchResults(query) {
+            const results = searchData.filter(item => {
+                return Object.values(item).some(value => 
+                    String(value).toLowerCase().includes(query.toLowerCase())
+                );
+            });
+
+            const resultsContainer = document.getElementById('search-results');
+            resultsContainer.classList.remove('hidden');
+            document.getElementById('paywall').classList.add('hidden');
+
+            if(results.length > 0) {
+                let html = '<h3>Résultats pour "' + query + '":</h3>';
+                results.forEach(item => {
+                    html += '<div class="result-item">';
+                    for(const [key, value] of Object.entries(item)) {
+                        html += `<p><strong>${key}:</strong> ${highlightQuery(value, query)}</p>`;
+                    }
+                    html += '</div>';
+                });
+                resultsContainer.innerHTML = html;
+            } else {
+                resultsContainer.innerHTML = '<p>Aucun résultat trouvé pour "' + query + '".</p>';
+            }
+        }
+
+        // Mettre en évidence les termes recherchés
+        function highlightQuery(text, query) {
+            if(typeof text !== 'string') return text;
+            const regex = new RegExp(query, 'gi');
+            return text.replace(regex, match => `<span class="highlight">${match}</span>`);
+        }
+    </script>
+</body>
+</html>
