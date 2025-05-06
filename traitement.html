@@ -67,6 +67,31 @@
             margin-bottom: 30px;
         }
 
+        /* Responsive styles */
+        @media (max-width: 768px) {
+            .menu-btn {
+                display: block;
+            }
+            
+            .nav-links {
+                position: fixed;
+                top: 70px;
+                left: -100%;
+                background: rgba(255, 0, 0, 0.7);
+                width: 100%;
+                flex-direction: column;
+                align-items: center;
+                transition: left 0.3s;
+                padding: 20px 0;
+            }
+            
+            .nav-links.active {
+                left: 0;
+            }
+            
+            .nav-links li {
+                margin: 15px 0;
+            }
         /* Navigation styles */
         nav {
             display: flex;
