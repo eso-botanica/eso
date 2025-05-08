@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> Inscription & connection</title>
+    <!-- Firebase Auth -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f4f4f9;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .auth-forms {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .auth-form {
+            flex: 1;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        h2 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        #user-status {
+            padding: 10px;
+            background: #e8f4fc;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        #disqus_thread {
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Bienvenue dans le salon Eso-Botanica </h1>
+        
+        <div id="user-status">
+            Vous n'êtes pas connecté. Inscrivez-vous ou connectez-vous pour commenter.
+        </div>
+
+        <div class="auth-forms">
+            <div class="auth-form">
+                <h2>Inscription</h2>
+                <input type="email" id="signup-email" placeholder="Email">
+                <input type="password" id="signup-password" placeholder="Mot de passe">
+                <button onclick="signUp()">S'inscrire</button>
+            </div>
+
+            <div class="auth-form">
+                <h2>Connexion</h2>
+                <input type="email" id="login-email" placeholder="Email">
+                <input type="password" id="login-password" placeholder="Mot de passe">
+                <button onclick="signIn()">Se connecter</button>
+            </div>
+        </div>
+
+        <div id="disqus_thread"></div>
+    </div>
+
+    <!-- Firebase Configuration -->
+    <script>
+        // Configurez Firebase avec vos clés (gratuit)
+        const firebaseConfig = {
+            apiKey: "AIzaSyBdVFpZ5xwM90QZMIMC9m8jrTaLNqN_bI4",
+            authDomain: "connection-5392f.firebaseapp.com",
+            projectId: "connection-5392f",
+            storageBucket: "connection-5392f.firebasestorage.app",
+            messagingSenderId: "157508792872",
+            appId: "1:157508792872:web:23987228dfa3facf627b1d"
+        };
+        
+        // Initialisez Firebase
+        firebase.initializeApp(firebaseConfig);
+        
+        // Gestion de l'authentification
+        function signUp() {
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+            
+            firebase.auth().createUserWithEmailAndPassword(email, password)
+                .then(() => {
+                    alert("Inscription réussie !");
+                    loadDisqus();
+                })
+                .catch(error => {
+                    alert("Erreur: " + error.message);
+                });
+        }
+        
+        function signIn() {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            
+            firebase.auth().signInWithEmailAndPassword(email, password)
+                .then(() => {
+                    alert("Connexion réussie !");
+                    loadDisqus();
+                })
+                .catch(error => {
+                    alert("Erreur: " + error.message);
+                });
+        }
+        
+        // Vérifie l'état de connexion
+        firebase.auth().onAuthStateChanged(user => {
+            const statusElement = document.getElementById('user-status');
+            if (user) {
+                statusElement.innerHTML = `Connecté en tant que: ${user.email} | <a href="#" onclick="signOut()">Déconnexion</a>`;
+                loadDisqus();
+            } else {
+                statusElement.innerHTML = "Vous n'êtes pas connecté. Inscrivez-vous ou connectez-vous pour commenter.";
+            }
+        });
+        
+        function signOut() {
+            firebase.auth().signOut();
+        }
+        
+        // Charge Disqus uniquement si l'utilisateur est connecté
+        function loadDisqus() {
+            if (firebase.auth().currentUser) {
+                const disqusScript = document.createElement('script');
+                disqusScript.src = 'https://https-eso-botanica-github-io-eso.disqus.com/embed.js';
+                disqusScript.setAttribute('data-timestamp', +new Date());
+                (document.head || document.body).appendChild(disqusScript);
+            }
+        }
+    </script>
+</body>
+</html>
