@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salon Eso-Botanica</title>
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f4f4f9;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .auth-forms {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .auth-form {
+            flex: 1;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        #user-status {
+            padding: 10px;
+            background: #e8f4fc;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        #comments-container {
+            margin-top: 30px;
+        }
+        .comment {
+            background: #f9f9f9;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+        .comment-author {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        #comment-form {
+            margin-top: 20px;
+        }
+        #comment-input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Salon Eso-Botanica 🌿</h1>
+        
+        <!-- État de connexion -->
+        <div id="user-status">Chargement...</div>
+
+        <!-- Formulaires Auth (cachés si connecté) -->
+        <div class="auth-forms" id="auth-forms">
+            <div class="auth-form">
+                <h2>Inscription</h2>
+                <input type="email" id="signup-email" placeholder="Email">
+                <input type="password" id="signup-password" placeholder="Mot de passe">
+                <button onclick="signUp()">S'inscrire</button>
+            </div>
+            <div class="auth-form">
+                <h2>Connexion</h2>
+                <input type="email" id="login-email" placeholder="Email">
+                <input type="password" id="login-password" placeholder="Mot de passe">
+                <button onclick="signIn()">Se connecter</button>
+            </div>
+        </div>
+
+        <!-- Zone de commentaires (visible uniquement si connecté) -->
+        <div id="comments-section" class="hidden">
+            <h2>Commentaires</h2>
+            <div id="comments-container"></div>
+            <form id="comment-form">
+                <textarea id="comment-input" placeholder="Votre commentaire..." required></textarea>
+                <button type="button" onclick="postComment()">Publier</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Configuration Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBdVFpZ5xwM90QZMIMC9m8jrTaLNqN_bI4",
+            authDomain: "connection-5392f.firebaseapp.com",
+            projectId: "connection-5392f",
+            storageBucket: "connection-5392f.appspot.com",
+            messagingSenderId: "157508792872",
+            appId: "1:157508792872:web:23987228dfa3facf627b1d"
+        };
+
+        // Initialisation Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Gestion de l'authentification
+        function signUp() {
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+            
+            auth.createUserWithEmailAndPassword(email, password)
+                .then(() => {
+                    alert("Inscription réussie !");
+                })
+                .catch(error => {
+                    alert("Erreur: " + error.message);
+                });
+        }
+
+        function signIn() {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            
+            auth.signInWithEmailAndPassword(email, password)
+                .then(() => {
+                    alert("Connexion réussie !");
+                })
+                .catch(error => {
+                    alert("Erreur: " + error.message);
+                });
+        }
+
+        function signOut() {
+            auth.signOut();
+        }
+
+        // Gestion des commentaires
+        function postComment() {
+            const commentInput = document.getElementById('comment-input');
+            const comment = commentInput.value.trim();
+            
+            if (comment && auth.currentUser) {
+                db.collection("comments").add({
+                    text: comment,
+                    author: auth.currentUser.email,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                })
+                .then(() => {
+                    commentInput.value = ""; // Vide le champ
+                })
+                .catch(error => {
+                    console.error("Erreur:", error);
+                });
+            }
+        }
+
+        // Affichage des commentaires en temps réel
+        function loadComments() {
+            db.collection("comments")
+                .orderBy("timestamp", "desc")
+                .onSnapshot(snapshot => {
+                    const commentsContainer = document.getElementById('comments-container');
+                    commentsContainer.innerHTML = "";
+                    
+                    snapshot.forEach(doc => {
+                        const comment = doc.data();
+                        const commentElement = document.createElement('div');
+                        commentElement.className = 'comment';
+                        commentElement.innerHTML = `
+                            <div class="comment-author">${comment.author}</div>
+                            <div class="comment-text">${comment.text}</div>
+                        `;
+                        commentsContainer.appendChild(commentElement);
+                    });
+                });
+        }
+
+        // Écouteur d'état d'authentification
+        auth.onAuthStateChanged(user => {
+            const statusElement = document.getElementById('user-status');
+            const authForms = document.getElementById('auth-forms');
+            const commentsSection = document.getElementById('comments-section');
+            
+            if (user) {
+                statusElement.innerHTML = `Connecté en tant que: ${user.email} | <a href="#" onclick="signOut()">Déconnexion</a>`;
+                authForms.classList.add('hidden');
+                commentsSection.classList.remove('hidden');
+                loadComments(); // Charge les commentaires
+            } else {
+                statusElement.innerHTML = "Vous n'êtes pas connecté. Inscrivez-vous ou connectez-vous pour commenter.";
+                authForms.classList.remove('hidden');
+                commentsSection.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
