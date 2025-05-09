@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salon Eso-Botanica 🌿</title>
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <!-- Font Awesome pour les icônes -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4a6f28;
+            --secondary: #8ba888;
+            --light: #f1f8e9;
+            --dark: #2c3e50;
+            --accent: #e67e22;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4efe9 100%);
+            color: var(--dark);
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 900px;
+            margin: 30px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+        h1 {
+            color: var(--primary);
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+        }
+        h2 {
+            color: var(--primary);
+            border-bottom: 2px solid var(--secondary);
+            padding-bottom: 8px;
+            margin-top: 30px;
+        }
+        /* Section Authentification */
+        .auth-forms {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        .auth-form {
+            flex: 1;
+            min-width: 280px;
+            padding: 25px;
+            background: var(--light);
+            border-radius: 10px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.05);
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border 0.3s;
+        }
+        input:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s, transform 0.2s;
+        }
+        button:hover {
+            background: #3a5a20;
+            transform: translateY(-2px);
+        }
+        button.secondary {
+            background: var(--secondary);
+        }
+        /* Section Utilisateur */
+        #user-status {
+            padding: 15px;
+            background: var(--light);
+            border-radius: 8px;
+            margin-bottom: 25px;
+            text-align: center;
+            font-weight: 500;
+        }
+        #user-status a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: bold;
+        }
+        /* Section Commentaires */
+        #comments-section {
+            margin-top: 40px;
+        }
+        .comments-container {
+            margin-top: 20px;
+        }
+        .comment {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            position: relative;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+        }
+        .comment-author {
+            font-weight: bold;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .comment-author i {
+            color: var(--accent);
+        }
+        .comment-timestamp {
+            font-size: 0.8rem;
+            color: #777;
+            margin-left: 10px;
+        }
+        .comment-text {
+            margin: 15px 0;
+            padding-left: 10px;
+            border-left: 3px solid var(--secondary);
+        }
+        .comment-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        .comment-actions button {
+            padding: 6px 12px;
+            font-size: 0.9rem;
+            background: transparent;
+            color: var(--dark);
+            border: 1px solid #ddd;
+        }
+        .comment-actions button:hover {
+            background: var(--light);
+        }
+        .reply-form {
+            margin-top: 15px;
+            padding-left: 30px;
+            border-left: 2px dashed var(--secondary);
+        }
+        .replies-container {
+            margin-top: 20px;
+            padding-left: 30px;
+        }
+        .reply {
+            background: #f9f9f9;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+        /* Formulaire principal */
+        #comment-form {
+            background: var(--light);
+            padding: 25px;
+            border-radius: 10px;
+            margin-top: 30px;
+        }
+        #comment-input {
+            width: 100%;
+            min-height: 100px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            resize: vertical;
+        }
+        /* Classes utilitaires */
+        .hidden {
+            display: none !important;
+        }
+        .text-center {
+            text-align: center;
+        }
+        /* Animation */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .comment, .reply {
+            animation: fadeIn 0.3s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><i class="fas fa-leaf"></i> Salon Eso-Botanica</h1>
+        
+        <!-- État de connexion -->
+        <div id="user-status">Chargement...</div>
+
+        <!-- Formulaires Auth -->
+        <div class="auth-forms" id="auth-forms">
+            <div class="auth-form">
+                <h2><i class="fas fa-user-plus"></i> Inscription</h2>
+                <input type="email" id="signup-email" placeholder="Votre email">
+                <input type="password" id="signup-password" placeholder="Mot de passe (6+ caractères)">
+                <button onclick="signUp()"><i class="fas fa-user-edit"></i> S'inscrire</button>
+            </div>
+            <div class="auth-form">
+                <h2><i class="fas fa-sign-in-alt"></i> Connexion</h2>
+                <input type="email" id="login-email" placeholder="Votre email">
+                <input type="password" id="login-password" placeholder="Mot de passe">
+                <button onclick="signIn()"><i class="fas fa-sign-in-alt"></i> Se connecter</button>
+            </div>
+        </div>
+
+        <!-- Section Commentaires -->
+        <div id="comments-section" class="hidden">
+            <h2><i class="fas fa-comments"></i> Discussions</h2>
+            <div id="comments-container" class="comments-container"></div>
+            
+            <form id="comment-form">
+                <h3><i class="fas fa-edit"></i> Nouveau commentaire</h3>
+                <textarea id="comment-input" placeholder="Partagez vos connaissances en botanique ésotérique..."></textarea>
+                <button type="button" onclick="postComment()"><i class="fas fa-paper-plane"></i> Publier</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Configuration Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBdVFpZ5xwM90QZMIMC9m8jrTaLNqN_bI4",
+            authDomain: "connection-5392f.firebaseapp.com",
+            projectId: "connection-5392f",
+            storageBucket: "connection-5392f.appspot.com",
+            messagingSenderId: "157508792872",
+            appId: "1:157508792872:web:23987228dfa3facf627b1d"
+        };
+
+        // Initialisation Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Variables globales
+        let currentReplyTo = null;
+
+        // ===== AUTHENTIFICATION =====
+        function signUp() {
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+            
+            auth.createUserWithEmailAndPassword(email, password)
+                .then(() => {
+                    alert("Bienvenue dans la communauté Eso-Botanica !");
+                })
+                .catch(error => {
+                    alert("Erreur: " + error.message);
+                });
+        }
+
+        function signIn() {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            
+            auth.signInWithEmailAndPassword(email, password)
+                .then(() => {
+                    console.log("Connexion réussie");
+                })
+                .catch(error => {
+                    alert("Erreur: " + error.message);
+                });
+        }
+
+        function signOut() {
+            auth.signOut();
+            currentReplyTo = null;
+        }
+
+        // ===== GESTION DES COMMENTAIRES =====
+        function postComment() {
+            const commentInput = document.getElementById('comment-input');
+            const commentText = commentInput.value.trim();
+            
+            if (!commentText) return;
+            
+            if (currentReplyTo) {
+                // Poste une réponse
+                db.collection("comments").doc(currentReplyTo).collection("replies").add({
+                    text: commentText,
+                    author: auth.currentUser.email,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    parentId: currentReplyTo
+                }).then(() => {
+                    commentInput.value = "";
+                    commentInput.placeholder = "Partagez vos connaissances en botanique ésotérique...";
+                    currentReplyTo = null;
+                });
+            } else {
+                // Poste un nouveau commentaire principal
+                db.collection("comments").add({
+                    text: commentText,
+                    author: auth.currentUser.email,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                }).then(() => {
+                    commentInput.value = "";
+                });
+            }
+        }
+
+        function replyToComment(commentId, author) {
+            currentReplyTo = commentId;
+            const commentInput = document.getElementById('comment-input');
+            commentInput.placeholder = `Réponse à ${author}...`;
+            commentInput.focus();
+        }
+
+        // ===== AFFICHAGE DES COMMENTAIRES =====
+        function loadComments() {
+            // Écoute les commentaires principaux
+            db.collection("comments")
+                .orderBy("timestamp", "desc")
+                .onSnapshot(snapshot => {
+                    const container = document.getElementById('comments-container');
+                    container.innerHTML = "";
+                    
+                    snapshot.forEach(doc => {
+                        const comment = doc.data();
+                        displayComment(doc.id, comment, container);
+                        
+                        // Écoute les réponses pour ce commentaire
+                        db.collection("comments").doc(doc.id).collection("replies")
+                            .orderBy("timestamp")
+                            .onSnapshot(replySnapshot => {
+                                const repliesContainer = document.getElementById(`replies-${doc.id}`);
+                                if (repliesContainer) {
+                                    repliesContainer.innerHTML = "";
+                                    replySnapshot.forEach(replyDoc => {
+                                        const reply = replyDoc.data();
+                                        displayReply(reply, repliesContainer);
+                                    });
+                                }
+                            });
+                    });
+                });
+        }
+
+        function displayComment(id, comment, container) {
+            const commentElement = document.createElement('div');
+            commentElement.className = 'comment';
+            commentElement.id = `comment-${id}`;
+            commentElement.innerHTML = `
+                <div class="comment-author">
+                    <i class="fas fa-user"></i>
+                    ${comment.author}
+                    <span class="comment-timestamp">${formatDate(comment.timestamp)}</span>
+                </div>
+                <div class="comment-text">${comment.text}</div>
+                <div class="comment-actions">
+                    <button onclick="replyToComment('${id}', '${comment.author}')">
+                        <i class="fas fa-reply"></i> Répondre
+                    </button>
+                </div>
+                <div id="replies-${id}" class="replies-container"></div>
+            `;
+            container.appendChild(commentElement);
+        }
+
+        function displayReply(reply, container) {
+            const replyElement = document.createElement('div');
+            replyElement.className = 'reply';
+            replyElement.innerHTML = `
+                <div class="comment-author">
+                    <i class="fas fa-user"></i>
+                    ${reply.author}
+                    <span class="comment-timestamp">${formatDate(reply.timestamp)}</span>
+                </div>
+                <div class="comment-text">${reply.text}</div>
+            `;
+            container.appendChild(replyElement);
+        }
+
+        function formatDate(timestamp) {
+            if (!timestamp) return "maintenant";
+            const date = timestamp.toDate();
+            return date.toLocaleString('fr-FR', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // ===== GESTION DE L'ÉTAT =====
+        auth.onAuthStateChanged(user => {
+            const statusElement = document.getElementById('user-status');
+            const authForms = document.getElementById('auth-forms');
+            const commentsSection = document.getElementById('comments-section');
+            
+            if (user) {
+                statusElement.innerHTML = `
+                    <i class="fas fa-user-circle"></i> Connecté en tant que <strong>${user.email}</strong> | 
+                    <a href="#" onclick="signOut()"><i class="fas fa-sign-out-alt"></i> Déconnexion</a>
+                `;
+                authForms.classList.add('hidden');
+                commentsSection.classList.remove('hidden');
+                loadComments();
+            } else {
+                statusElement.innerHTML = `
+                    <i class="fas fa-exclamation-circle"></i> Vous n'êtes pas connecté. 
+                    Inscrivez-vous ou connectez-vous pour participer aux discussions.
+                `;
+                authForms.classList.remove('hidden');
+                commentsSection.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
