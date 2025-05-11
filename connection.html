@@ -156,6 +156,12 @@
         .comment-actions button:hover {
             background: var(--light);
         }
+        .comment-actions button.liked {
+            color: #e74c3c;
+        }
+        .comment-actions button.liked i {
+            color: #e74c3c;
+        }
         .reply-form {
             margin-top: 15px;
             padding-left: 30px;
@@ -309,15 +315,21 @@
                     commentInput.value = "";
                     commentInput.placeholder = "Partagez vos connaissances en botanique ésotérique...";
                     currentReplyTo = null;
+                }).catch(error => {
+                    console.error("Erreur lors de l'ajout de la réponse: ", error);
                 });
             } else {
                 // Poste un nouveau commentaire principal
                 db.collection("comments").add({
                     text: commentText,
                     author: auth.currentUser.email,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    likes: 0,
+                    likedBy: []
                 }).then(() => {
                     commentInput.value = "";
+                }).catch(error => {
+                    console.error("Erreur lors de l'ajout du commentaire: ", error);
                 });
             }
         }
@@ -327,6 +339,37 @@
             const commentInput = document.getElementById('comment-input');
             commentInput.placeholder = `Réponse à ${author}...`;
             commentInput.focus();
+        }
+
+        function toggleLike(commentId, currentLikes, likedBy) {
+            if (!auth.currentUser) return;
+            
+            const userId = auth.currentUser.uid;
+            const userEmail = auth.currentUser.email;
+            const commentRef = db.collection("comments").doc(commentId);
+            
+            // Vérifie si l'utilisateur a déjà liké
+            const userIndex = likedBy.indexOf(userEmail);
+            let newLikes = currentLikes;
+            let newLikedBy = [...likedBy];
+            
+            if (userIndex > -1) {
+                // Retire le like
+                newLikes--;
+                newLikedBy.splice(userIndex, 1);
+            } else {
+                // Ajoute un like
+                newLikes++;
+                newLikedBy.push(userEmail);
+            }
+            
+            // Met à jour le commentaire
+            commentRef.update({
+                likes: newLikes,
+                likedBy: newLikedBy
+            }).catch(error => {
+                console.error("Erreur lors de la mise à jour du like: ", error);
+            });
         }
 
         // ===== AFFICHAGE DES COMMENTAIRES =====
@@ -342,20 +385,28 @@
                         const comment = doc.data();
                         displayComment(doc.id, comment, container);
                         
-                        // Écoute les réponses pour ce commentaire
-                        db.collection("comments").doc(doc.id).collection("replies")
-                            .orderBy("timestamp")
-                            .onSnapshot(replySnapshot => {
-                                const repliesContainer = document.getElementById(`replies-${doc.id}`);
-                                if (repliesContainer) {
-                                    repliesContainer.innerHTML = "";
-                                    replySnapshot.forEach(replyDoc => {
-                                        const reply = replyDoc.data();
-                                        displayReply(reply, repliesContainer);
-                                    });
-                                }
-                            });
+                        // Charge les réponses existantes
+                        loadReplies(doc.id);
                     });
+                }, error => {
+                    console.error("Erreur lors du chargement des commentaires: ", error);
+                });
+        }
+
+        function loadReplies(commentId) {
+            db.collection("comments").doc(commentId).collection("replies")
+                .orderBy("timestamp")
+                .onSnapshot(snapshot => {
+                    const repliesContainer = document.getElementById(`replies-${commentId}`);
+                    if (repliesContainer) {
+                        repliesContainer.innerHTML = "";
+                        snapshot.forEach(replyDoc => {
+                            const reply = replyDoc.data();
+                            displayReply(reply, repliesContainer);
+                        });
+                    }
+                }, error => {
+                    console.error("Erreur lors du chargement des réponses: ", error);
                 });
         }
 
@@ -363,6 +414,9 @@
             const commentElement = document.createElement('div');
             commentElement.className = 'comment';
             commentElement.id = `comment-${id}`;
+            
+            const isLiked = auth.currentUser && comment.likedBy && comment.likedBy.includes(auth.currentUser.email);
+            
             commentElement.innerHTML = `
                 <div class="comment-author">
                     <i class="fas fa-user"></i>
@@ -371,6 +425,10 @@
                 </div>
                 <div class="comment-text">${comment.text}</div>
                 <div class="comment-actions">
+                    <button onclick="toggleLike('${id}', ${comment.likes || 0}, ${JSON.stringify(comment.likedBy || [])})" 
+                            class="${isLiked ? 'liked' : ''}">
+                        <i class="fas fa-heart"></i> J'aime (${comment.likes || 0})
+                    </button>
                     <button onclick="replyToComment('${id}', '${comment.author}')">
                         <i class="fas fa-reply"></i> Répondre
                     </button>
@@ -422,7 +480,7 @@
                 loadComments();
             } else {
                 statusElement.innerHTML = `
-                    <i class="fas fa-exclamation-circle"></i> Vous n'êtes pas connecté. 
+                 <i class="fas fa-exclamation-circle"></i> Vous n'êtes pas connecté. 
                     Inscrivez-vous ou connectez-vous pour participer aux discussions.
                 `;
                 authForms.classList.remove('hidden');
@@ -431,4 +489,4 @@
         });
     </script>
 </body>
-</html>
+    </htm
