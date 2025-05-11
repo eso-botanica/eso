@@ -8,6 +8,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
     <!-- Font Awesome pour les icônes -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -141,6 +142,13 @@
             padding-left: 10px;
             border-left: 3px solid var(--secondary);
         }
+        .comment-image {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            margin: 10px 0;
+            display: block;
+        }
         .comment-actions {
             display: flex;
             gap: 15px;
@@ -193,6 +201,15 @@
             font-size: 16px;
             resize: vertical;
         }
+        .image-upload {
+            margin: 15px 0;
+        }
+        .image-preview {
+            max-width: 200px;
+            max-height: 200px;
+            margin-top: 10px;
+            display: none;
+        }
         /* Classes utilitaires */
         .hidden {
             display: none !important;
@@ -241,6 +258,18 @@
             <form id="comment-form">
                 <h3><i class="fas fa-edit"></i> Nouveau commentaire</h3>
                 <textarea id="comment-input" placeholder="Partagez vos connaissances en botanique ésotérique..."></textarea>
+                
+                <div class="image-upload">
+                    <label for="image-upload-input">
+                        <i class="fas fa-image"></i> Ajouter une photo
+                        <input type="file" id="image-upload-input" accept="image/*" style="display: none;">
+                    </label>
+                    <img id="image-preview" class="image-preview" src="#" alt="Aperçu de l'image">
+                    <button type="button" id="remove-image-btn" class="hidden" onclick="removeImage()">
+                        <i class="fas fa-trash"></i> Supprimer
+                    </button>
+                </div>
+                
                 <button type="button" onclick="postComment()"><i class="fas fa-paper-plane"></i> Publier</button>
             </form>
         </div>
@@ -261,9 +290,42 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
+        const storage = firebase.storage();
 
         // Variables globales
         let currentReplyTo = null;
+        let selectedImageFile = null;
+
+        // ===== GESTION DES IMAGES =====
+        document.getElementById('image-upload-input').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const preview = document.getElementById('image-preview');
+                    preview.src = event.target.result;
+                    preview.style.display = 'block';
+                    document.getElementById('remove-image-btn').classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+                selectedImageFile = file;
+            }
+        });
+
+        function removeImage() {
+            document.getElementById('image-upload-input').value = '';
+            document.getElementById('image-preview').style.display = 'none';
+            document.getElementById('remove-image-btn').classList.add('hidden');
+            selectedImageFile = null;
+        }
+
+        async function uploadImage(commentId) {
+            if (!selectedImageFile) return null;
+            
+            const storageRef = storage.ref(`comment_images/${commentId}/${selectedImageFile.name}`);
+            await storageRef.put(selectedImageFile);
+            return await storageRef.getDownloadURL();
+        }
 
         // ===== AUTHENTIFICATION =====
         function signUp() {
@@ -298,39 +360,56 @@
         }
 
         // ===== GESTION DES COMMENTAIRES =====
-        function postComment() {
+        async function postComment() {
             const commentInput = document.getElementById('comment-input');
             const commentText = commentInput.value.trim();
             
-            if (!commentText) return;
+            if (!commentText && !selectedImageFile) return;
             
-            if (currentReplyTo) {
-                // Poste une réponse
-                db.collection("comments").doc(currentReplyTo).collection("replies").add({
-                    text: commentText,
-                    author: auth.currentUser.email,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                    parentId: currentReplyTo
-                }).then(() => {
+            try {
+                if (currentReplyTo) {
+                    // Poste une réponse
+                    const replyData = {
+                        text: commentText,
+                        author: auth.currentUser.email,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                        parentId: currentReplyTo
+                    };
+                    
+                    if (selectedImageFile) {
+                        const imageUrl = await uploadImage(`reply_${Date.now()}`);
+                        replyData.imageUrl = imageUrl;
+                    }
+                    
+                    await db.collection("comments").doc(currentReplyTo).collection("replies").add(replyData);
+                    
                     commentInput.value = "";
                     commentInput.placeholder = "Partagez vos connaissances en botanique ésotérique...";
                     currentReplyTo = null;
-                }).catch(error => {
-                    console.error("Erreur lors de l'ajout de la réponse: ", error);
-                });
-            } else {
-                // Poste un nouveau commentaire principal
-                db.collection("comments").add({
-                    text: commentText,
-                    author: auth.currentUser.email,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                    likes: 0,
-                    likedBy: []
-                }).then(() => {
+                } else {
+                    // Poste un nouveau commentaire principal
+                    const commentData = {
+                        text: commentText,
+                        author: auth.currentUser.email,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                        likes: 0,
+                        likedBy: []
+                    };
+                    
+                    if (selectedImageFile) {
+                        const commentId = db.collection("comments").doc().id;
+                        const imageUrl = await uploadImage(commentId);
+                        commentData.imageUrl = imageUrl;
+                    }
+                    
+                    await db.collection("comments").add(commentData);
                     commentInput.value = "";
-                }).catch(error => {
-                    console.error("Erreur lors de l'ajout du commentaire: ", error);
-                });
+                }
+                
+                removeImage();
+            } catch (error) {
+                console.error("Erreur lors de la publication: ", error);
+                alert("Une erreur est survenue lors de la publication");
             }
         }
 
@@ -424,6 +503,7 @@
                     <span class="comment-timestamp">${formatDate(comment.timestamp)}</span>
                 </div>
                 <div class="comment-text">${comment.text}</div>
+                ${comment.imageUrl ? `<img src="${comment.imageUrl}" class="comment-image" alt="Image jointe">` : ''}
                 <div class="comment-actions">
                     <button onclick="toggleLike('${id}', ${comment.likes || 0}, ${JSON.stringify(comment.likedBy || [])})" 
                             class="${isLiked ? 'liked' : ''}">
@@ -448,6 +528,7 @@
                     <span class="comment-timestamp">${formatDate(reply.timestamp)}</span>
                 </div>
                 <div class="comment-text">${reply.text}</div>
+                ${reply.imageUrl ? `<img src="${reply.imageUrl}" class="comment-image" alt="Image jointe">` : ''}
             `;
             container.appendChild(replyElement);
         }
@@ -480,7 +561,7 @@
                 loadComments();
             } else {
                 statusElement.innerHTML = `
-                 <i class="fas fa-exclamation-circle"></i> Vous n'êtes pas connecté. 
+                    <i class="fas fa-exclamation-circle"></i> Vous n'êtes pas connecté. 
                     Inscrivez-vous ou connectez-vous pour participer aux discussions.
                 `;
                 authForms.classList.remove('hidden');
@@ -489,4 +570,4 @@
         });
     </script>
 </body>
-    </htm
+    </html
