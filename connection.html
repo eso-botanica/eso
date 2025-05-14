@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Salon Eso-Botanica 🌿</title>
+    <title>Eso-Forum 🌿</title>
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
     <!-- Font Awesome pour les icônes -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -142,13 +141,6 @@
             padding-left: 10px;
             border-left: 3px solid var(--secondary);
         }
-        .comment-image {
-            max-width: 100%;
-            max-height: 300px;
-            border-radius: 8px;
-            margin: 10px 0;
-            display: block;
-        }
         .comment-actions {
             display: flex;
             gap: 15px;
@@ -201,14 +193,105 @@
             font-size: 16px;
             resize: vertical;
         }
-        .image-upload {
+        /* Chat privé */
+        #private-chat-section {
+            margin-top: 40px;
+        }
+        #users-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
             margin: 15px 0;
         }
-        .image-preview {
-            max-width: 200px;
-            max-height: 200px;
-            margin-top: 10px;
+        .user-card {
+            background: var(--light);
+            padding: 10px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .user-card:hover {
+            background: var(--secondary);
+            color: white;
+        }
+        .user-card.online {
+            border-left: 4px solid #2ecc71;
+        }
+        .user-card.offline {
+            opacity: 0.7;
+        }
+        .user-card .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .user-card.online .status-dot {
+            background: #2ecc71;
+        }
+        .user-card.offline .status-dot {
+            background: #95a5a6;
+        }
+        #chat-container {
             display: none;
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        #chat-header {
+            background: var(--primary);
+            color: white;
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #chat-messages {
+            height: 300px;
+            overflow-y: auto;
+            padding: 15px;
+            background: white;
+        }
+        .message {
+            margin-bottom: 15px;
+            max-width: 70%;
+            padding: 10px 15px;
+            border-radius: 18px;
+        }
+        .message.sent {
+            background: var(--primary);
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 5px;
+        }
+        .message.received {
+            background: #f1f1f1;
+            margin-right: auto;
+            border-bottom-left-radius: 5px;
+        }
+        .message-info {
+            font-size: 0.8rem;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+        #chat-input-container {
+            display: flex;
+            border-top: 1px solid #ddd;
+            background: var(--light);
+        }
+        #chat-input {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 0;
+        }
+        #send-chat-btn {
+            border-radius: 0;
         }
         /* Classes utilitaires */
         .hidden {
@@ -222,7 +305,7 @@
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        .comment, .reply {
+        .comment, .reply, .message {
             animation: fadeIn 0.3s ease-out;
         }
     </style>
@@ -258,20 +341,29 @@
             <form id="comment-form">
                 <h3><i class="fas fa-edit"></i> Nouveau commentaire</h3>
                 <textarea id="comment-input" placeholder="Partagez vos connaissances en botanique ésotérique..."></textarea>
-                
-                <div class="image-upload">
-                    <label for="image-upload-input">
-                        <i class="fas fa-image"></i> Ajouter une photo
-                        <input type="file" id="image-upload-input" accept="image/*" style="display: none;">
-                    </label>
-                    <img id="image-preview" class="image-preview" src="#" alt="Aperçu de l'image">
-                    <button type="button" id="remove-image-btn" class="hidden" onclick="removeImage()">
-                        <i class="fas fa-trash"></i> Supprimer
-                    </button>
-                </div>
-                
                 <button type="button" onclick="postComment()"><i class="fas fa-paper-plane"></i> Publier</button>
             </form>
+        </div>
+
+        <!-- Section Chat Privé -->
+        <div id="private-chat-section" class="hidden">
+            <h2><i class="fas fa-comment-dots"></i> Messages Privés</h2>
+            <p>Discutez en privé avec d'autres membres (seulement pour les utilisateurs connectés)</p>
+            
+            <h3>Membres en ligne</h3>
+            <div id="users-list"></div>
+            
+            <div id="chat-container">
+                <div id="chat-header">
+                    <span id="chat-with-user">Discussion avec <span id="current-chat-user"></span></span>
+                    <button onclick="closeChat()" class="secondary"><i class="fas fa-times"></i></button>
+                </div>
+                <div id="chat-messages"></div>
+                <div id="chat-input-container">
+                    <input type="text" id="chat-input" placeholder="Tapez votre message...">
+                    <button id="send-chat-btn" onclick="sendPrivateMessage()"><i class="fas fa-paper-plane"></i></button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -290,42 +382,13 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
-        const storage = firebase.storage();
 
         // Variables globales
         let currentReplyTo = null;
-        let selectedImageFile = null;
-
-        // ===== GESTION DES IMAGES =====
-        document.getElementById('image-upload-input').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    const preview = document.getElementById('image-preview');
-                    preview.src = event.target.result;
-                    preview.style.display = 'block';
-                    document.getElementById('remove-image-btn').classList.remove('hidden');
-                };
-                reader.readAsDataURL(file);
-                selectedImageFile = file;
-            }
-        });
-
-        function removeImage() {
-            document.getElementById('image-upload-input').value = '';
-            document.getElementById('image-preview').style.display = 'none';
-            document.getElementById('remove-image-btn').classList.add('hidden');
-            selectedImageFile = null;
-        }
-
-        async function uploadImage(commentId) {
-            if (!selectedImageFile) return null;
-            
-            const storageRef = storage.ref(`comment_images/${commentId}/${selectedImageFile.name}`);
-            await storageRef.put(selectedImageFile);
-            return await storageRef.getDownloadURL();
-        }
+        let currentChatWith = null;
+        let usersOnline = {};
+        let userStatusRef = null;
+        let currentUserEmail = null;
 
         // ===== AUTHENTIFICATION =====
         function signUp() {
@@ -357,6 +420,7 @@
         function signOut() {
             auth.signOut();
             currentReplyTo = null;
+            currentChatWith = null;
         }
 
         // ===== GESTION DES COMMENTAIRES =====
@@ -364,7 +428,7 @@
             const commentInput = document.getElementById('comment-input');
             const commentText = commentInput.value.trim();
             
-            if (!commentText && !selectedImageFile) return;
+            if (!commentText) return;
             
             try {
                 if (currentReplyTo) {
@@ -375,11 +439,6 @@
                         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                         parentId: currentReplyTo
                     };
-                    
-                    if (selectedImageFile) {
-                        const imageUrl = await uploadImage(`reply_${Date.now()}`);
-                        replyData.imageUrl = imageUrl;
-                    }
                     
                     await db.collection("comments").doc(currentReplyTo).collection("replies").add(replyData);
                     
@@ -396,17 +455,9 @@
                         likedBy: []
                     };
                     
-                    if (selectedImageFile) {
-                        const commentId = db.collection("comments").doc().id;
-                        const imageUrl = await uploadImage(commentId);
-                        commentData.imageUrl = imageUrl;
-                    }
-                    
                     await db.collection("comments").add(commentData);
                     commentInput.value = "";
                 }
-                
-                removeImage();
             } catch (error) {
                 console.error("Erreur lors de la publication: ", error);
                 alert("Une erreur est survenue lors de la publication");
@@ -503,7 +554,6 @@
                     <span class="comment-timestamp">${formatDate(comment.timestamp)}</span>
                 </div>
                 <div class="comment-text">${comment.text}</div>
-                ${comment.imageUrl ? `<img src="${comment.imageUrl}" class="comment-image" alt="Image jointe">` : ''}
                 <div class="comment-actions">
                     <button onclick="toggleLike('${id}', ${comment.likes || 0}, ${JSON.stringify(comment.likedBy || [])})" 
                             class="${isLiked ? 'liked' : ''}">
@@ -512,6 +562,10 @@
                     <button onclick="replyToComment('${id}', '${comment.author}')">
                         <i class="fas fa-reply"></i> Répondre
                     </button>
+                    ${auth.currentUser && comment.author !== auth.currentUser.email ? 
+                      `<button onclick="startPrivateChat('${comment.author}')">
+                        <i class="fas fa-comment-dots"></i> Message privé
+                      </button>` : ''}
                 </div>
                 <div id="replies-${id}" class="replies-container"></div>
             `;
@@ -528,7 +582,6 @@
                     <span class="comment-timestamp">${formatDate(reply.timestamp)}</span>
                 </div>
                 <div class="comment-text">${reply.text}</div>
-                ${reply.imageUrl ? `<img src="${reply.imageUrl}" class="comment-image" alt="Image jointe">` : ''}
             `;
             container.appendChild(replyElement);
         }
@@ -545,11 +598,174 @@
             });
         }
 
+        // ===== CHAT PRIVÉ =====
+        function loadOnlineUsers() {
+            // Écoute les changements de statut des utilisateurs
+            db.collection("status")
+                .where("state", "==", "online")
+                .onSnapshot(snapshot => {
+                    usersOnline = {};
+                    snapshot.forEach(doc => {
+                        if (doc.id !== currentUserEmail) {
+                            usersOnline[doc.id] = doc.data();
+                        }
+                    });
+                    updateUsersList();
+                });
+        }
+
+        function updateUsersList() {
+            const usersList = document.getElementById('users-list');
+            usersList.innerHTML = '';
+            
+            // Ajoute les utilisateurs en ligne
+            Object.keys(usersOnline).forEach(email => {
+                const userCard = document.createElement('div');
+                userCard.className = 'user-card online';
+                userCard.innerHTML = `
+                    <span class="status-dot"></span>
+                    <span>${email}</span>
+                `;
+                userCard.onclick = () => startPrivateChat(email);
+                usersList.appendChild(userCard);
+            });
+            
+            // Si pas d'utilisateurs en ligne
+            if (Object.keys(usersOnline).length === 0) {
+                usersList.innerHTML = '<p>Aucun autre utilisateur en ligne pour le moment.</p>';
+            }
+        }
+
+        function startPrivateChat(email) {
+            currentChatWith = email;
+            document.getElementById('current-chat-user').textContent = email;
+            document.getElementById('chat-container').style.display = 'block';
+            document.getElementById('chat-input').focus();
+            
+            // Charge les messages existants
+            loadPrivateMessages();
+        }
+
+        function closeChat() {
+            currentChatWith = null;
+            document.getElementById('chat-container').style.display = 'none';
+            document.getElementById('chat-messages').innerHTML = '';
+        }
+
+        function loadPrivateMessages() {
+            if (!currentChatWith) return;
+            
+            const messagesContainer = document.getElementById('chat-messages');
+            messagesContainer.innerHTML = '';
+            
+            // Crée un ID de conversation unique basé sur les emails triés
+            const chatId = [currentUserEmail, currentChatWith].sort().join('_');
+            
+            db.collection("privateChats").doc(chatId).collection("messages")
+                .orderBy("timestamp", "asc")
+                .onSnapshot(snapshot => {
+                    messagesContainer.innerHTML = '';
+                    snapshot.forEach(doc => {
+                        const message = doc.data();
+                        displayPrivateMessage(message);
+                    });
+                    // Scroll vers le bas
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                });
+        }
+
+        function displayPrivateMessage(message) {
+            const messagesContainer = document.getElementById('chat-messages');
+            const messageElement = document.createElement('div');
+            
+            messageElement.className = `message ${message.sender === currentUserEmail ? 'sent' : 'received'}`;
+            messageElement.innerHTML = `
+                <div class="message-info">
+                    <span>${message.sender === currentUserEmail ? 'Vous' : message.sender}</span>
+                    <span>${formatDate(message.timestamp)}</span>
+                </div>
+                <div>${message.text}</div>
+            `;
+            
+            messagesContainer.appendChild(messageElement);
+        }
+
+        function sendPrivateMessage() {
+            if (!currentChatWith) return;
+            
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if (!text) return;
+            
+            // Crée un ID de conversation unique basé sur les emails triés
+            const chatId = [currentUserEmail, currentChatWith].sort().join('_');
+            
+            const messageData = {
+                text: text,
+                sender: currentUserEmail,
+                recipient: currentChatWith,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            
+            db.collection("privateChats").doc(chatId).collection("messages").add(messageData)
+                .then(() => {
+                    input.value = '';
+                })
+                .catch(error => {
+                    console.error("Erreur lors de l'envoi du message: ", error);
+                    alert("Une erreur est survenue lors de l'envoi du message");
+                });
+        }
+
+        // Gestion du statut en ligne/hors ligne
+        function managePresence() {
+            const uid = auth.currentUser.uid;
+            currentUserEmail = auth.currentUser.email;
+            
+            // Référence à la connexion Firestore
+            const dbRef = db.collection("status").doc(currentUserEmail);
+            
+            // Référence à la connexion Firestore
+            const isOfflineForFirestore = {
+                state: 'offline',
+                lastChanged: firebase.firestore.FieldValue.serverTimestamp(),
+            };
+
+            const isOnlineForFirestore = {
+                state: 'online',
+                lastChanged: firebase.firestore.FieldValue.serverTimestamp(),
+            };
+
+            // Surveille la connexion
+            db.enableNetwork().then(() => {
+                firebase.firestore().runTransaction(() => {
+                    return dbRef.set(isOnlineForFirestore);
+                });
+                
+                // Définit l'utilisateur comme hors ligne lorsqu'il se déconnecte
+                userStatusRef = dbRef.onSnapshot(() => {});
+                
+                // Définit l'utilisateur comme hors ligne lorsqu'il se déconnecte
+                auth.onAuthStateChanged((user) => {
+                    if (!user) {
+                        dbRef.set(isOfflineForFirestore);
+                        if (userStatusRef) userStatusRef();
+                    }
+                });
+                
+                // Définit l'utilisateur comme hors ligne lorsque la fenêtre se ferme
+                window.addEventListener('beforeunload', () => {
+                    dbRef.set(isOfflineForFirestore);
+                });
+            });
+        }
+
         // ===== GESTION DE L'ÉTAT =====
         auth.onAuthStateChanged(user => {
             const statusElement = document.getElementById('user-status');
             const authForms = document.getElementById('auth-forms');
             const commentsSection = document.getElementById('comments-section');
+            const privateChatSection = document.getElementById('private-chat-section');
             
             if (user) {
                 statusElement.innerHTML = `
@@ -558,7 +774,10 @@
                 `;
                 authForms.classList.add('hidden');
                 commentsSection.classList.remove('hidden');
+                privateChatSection.classList.remove('hidden');
                 loadComments();
+                loadOnlineUsers();
+                managePresence();
             } else {
                 statusElement.innerHTML = `
                     <i class="fas fa-exclamation-circle"></i> Vous n'êtes pas connecté. 
@@ -566,8 +785,16 @@
                 `;
                 authForms.classList.remove('hidden');
                 commentsSection.classList.add('hidden');
+                privateChatSection.classList.add('hidden');
+            }
+        });
+
+        // Permet d'envoyer un message avec la touche Entrée
+        document.getElementById('chat-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendPrivateMessage();
             }
         });
     </script>
 </body>
-    </html
+</html>
