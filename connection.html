@@ -17,6 +17,8 @@
             --light: #f1f8e9;
             --dark: #2c3e50;
             --accent: #e67e22;
+            --message-received: #f0e8ff;
+            --message-sent: #e3f2fd;
         }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -61,7 +63,7 @@
             border-radius: 10px;
             box-shadow: 0 3px 6px rgba(0,0,0,0.05);
         }
-        input {
+        input, select {
             width: 100%;
             padding: 12px;
             margin: 10px 0;
@@ -70,7 +72,7 @@
             font-size: 16px;
             transition: border 0.3s;
         }
-        input:focus {
+        input:focus, select:focus {
             border-color: var(--primary);
             outline: none;
         }
@@ -193,88 +195,87 @@
             font-size: 16px;
             resize: vertical;
         }
-        /* Messagerie privée */
-        #private-messages-section {
-            margin-top: 40px;
-            display: none;
-        }
-        #pm-toggle {
-            margin-bottom: 20px;
-        }
-        .pm-container {
-            display: flex;
-            gap: 20px;
-        }
-        #pm-users-list {
-            flex: 1;
-            max-width: 250px;
-            background: var(--light);
-            border-radius: 8px;
-            padding: 15px;
-            max-height: 400px;
-            overflow-y: auto;
-        }
-        .pm-user {
-            padding: 10px;
-            cursor: pointer;
-            border-radius: 4px;
-            margin-bottom: 5px;
-        }
-        .pm-user:hover {
-            background: #e0e0e0;
-        }
-        .pm-user.active {
-            background: var(--secondary);
+        /* Messages privés */
+        .private-message-btn {
+            background: #6c5ce7;
             color: white;
         }
-        #pm-conversation {
-            flex: 3;
-            background: white;
+        .private-message-btn:hover {
+            background: #5649c0;
+        }
+        #private-message-form {
+            background: #f0e8ff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+        #private-messages-container {
+            margin-top: 40px;
+        }
+        .private-message {
             border-radius: 8px;
             padding: 15px;
-            border: 1px solid #e0e0e0;
-        }
-        #pm-messages {
-            height: 300px;
-            overflow-y: auto;
             margin-bottom: 15px;
-            padding: 10px;
-            background: #f9f9f9;
-            border-radius: 4px;
+            position: relative;
         }
-        .pm-message {
-            margin-bottom: 10px;
-            padding: 8px 12px;
-            border-radius: 4px;
-            max-width: 70%;
+        .private-message.received {
+            background: var(--message-received);
+            border-left: 4px solid #6c5ce7;
         }
-        .pm-message.sent {
-            background: #e3f2fd;
-            margin-left: auto;
+        .private-message.sent {
+            background: var(--message-sent);
+            border-left: 4px solid #2196f3;
         }
-        .pm-message.received {
-            background: #f1f1f1;
-            margin-right: auto;
-        }
-        .pm-message-author {
+        .private-message .sender {
             font-weight: bold;
+            color: #6c5ce7;
+        }
+        .private-message.sent .sender {
+            color: #2196f3;
+        }
+        .private-message .timestamp {
             font-size: 0.8rem;
-            margin-bottom: 3px;
-        }
-        .pm-message-time {
-            font-size: 0.7rem;
             color: #777;
-            text-align: right;
         }
-        #pm-form {
+        .private-message .message-text {
+            margin-top: 10px;
+            padding-left: 10px;
+        }
+        .unread-badge {
+            position: absolute;
+            right: 15px;
+            top: 15px;
+            background: #e74c3c;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
             display: flex;
-            gap: 10px;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
         }
-        #pm-input {
-            flex: 1;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+        /* Onglets */
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+        }
+        .tab.active {
+            border-bottom: 3px solid var(--primary);
+            font-weight: bold;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
         }
         /* Classes utilitaires */
         .hidden {
@@ -288,7 +289,7 @@
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        .comment, .reply, .pm-message {
+        .comment, .reply, .private-message {
             animation: fadeIn 0.3s ease-out;
         }
     </style>
@@ -316,45 +317,52 @@
             </div>
         </div>
 
-        <!-- Section Commentaires -->
-        <div id="comments-section" class="hidden">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h2><i class="fas fa-comments"></i> Discussions</h2>
-                <button id="pm-toggle" onclick="togglePrivateMessages()">
+        <!-- Section principale (visible seulement quand connecté) -->
+        <div id="main-section" class="hidden">
+            <!-- Onglets -->
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('public-discussions')">
+                    <i class="fas fa-comments"></i> Discussions publiques
+                </div>
+                <div class="tab" onclick="switchTab('private-messages')">
                     <i class="fas fa-envelope"></i> Messages privés
-                </button>
+                    <span id="unread-count" class="hidden" style="margin-left: 5px;"></span>
+                </div>
             </div>
-            <div id="comments-container" class="comments-container"></div>
-            
-            <form id="comment-form">
-                <h3><i class="fas fa-edit"></i> Nouveau commentaire</h3>
-                <textarea id="comment-input" placeholder="Partagez vos connaissances en botanique ésotérique..."></textarea>
-                <button type="button" onclick="postComment()"><i class="fas fa-paper-plane"></i> Publier</button>
-            </form>
-        </div>
 
-        <!-- Section Messagerie privée -->
-        <div id="private-messages-section">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h2><i class="fas fa-envelope"></i> Messages privés</h2>
-                <button id="pm-toggle" onclick="togglePrivateMessages()">
-                    <i class="fas fa-comments"></i> Retour aux discussions
-                </button>
-            </div>
-            
-            <div class="pm-container">
-                <div id="pm-users-list">
-                    <h3>Utilisateurs</h3>
-                    <div id="pm-users"></div>
-                </div>
+            <!-- Contenu des onglets -->
+            <div id="public-discussions" class="tab-content active">
+                <h2><i class="fas fa-comments"></i> Discussions</h2>
+                <div id="comments-container" class="comments-container"></div>
                 
-                <div id="pm-conversation">
-                    <div id="pm-messages"></div>
-                    <form id="pm-form" onsubmit="sendPrivateMessage(); return false;">
-                        <input type="text" id="pm-input" placeholder="Écrivez votre message...">
-                        <button type="submit"><i class="fas fa-paper-plane"></i></button>
-                    </form>
-                </div>
+                <form id="comment-form">
+                    <h3><i class="fas fa-edit"></i> Nouveau commentaire</h3>
+                    <textarea id="comment-input" placeholder="Partagez vos connaissances en botanique ésotérique..."></textarea>
+                    <button type="button" onclick="postComment()"><i class="fas fa-paper-plane"></i> Publier</button>
+                </form>
+            </div>
+
+            <div id="private-messages" class="tab-content">
+                <h2><i class="fas fa-envelope"></i> Messages privés</h2>
+                
+                <button onclick="showNewMessageForm()" class="private-message-btn">
+                    <i class="fas fa-plus"></i> Nouveau message
+                </button>
+                
+                <form id="private-message-form">
+                    <select id="recipient-select" required>
+                        <option value="">Sélectionnez un destinataire</option>
+                    </select>
+                    <textarea id="private-message-input" placeholder="Écrivez votre message privé..." style="margin-top: 10px;" required></textarea>
+                    <button type="button" onclick="sendPrivateMessage()" class="private-message-btn">
+                        <i class="fas fa-paper-plane"></i> Envoyer
+                    </button>
+                    <button type="button" onclick="hideNewMessageForm()" style="margin-left: 10px;">
+                        Annuler
+                    </button>
+                </form>
+                
+                <div id="private-messages-container"></div>
             </div>
         </div>
     </div>
@@ -377,15 +385,27 @@
 
         // Variables globales
         let currentReplyTo = null;
-        let currentPmRecipient = null;
-        let users = [];
+        let allUsers = [];
+        let unreadMessagesCount = 0;
 
         // ===== AUTHENTIFICATION =====
         function signUp() {
             const email = document.getElementById('signup-email').value;
             const password = document.getElementById('signup-password').value;
             
+            if (!email || !password) {
+                alert("Veuillez remplir tous les champs");
+                return;
+            }
+            
             auth.createUserWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    // Enregistre l'utilisateur dans Firestore
+                    return db.collection("users").doc(userCredential.user.uid).set({
+                        email: email,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                })
                 .then(() => {
                     alert("Bienvenue dans la communauté Eso-Botanica !");
                 })
@@ -397,6 +417,11 @@
         function signIn() {
             const email = document.getElementById('login-email').value;
             const password = document.getElementById('login-password').value;
+            
+            if (!email || !password) {
+                alert("Veuillez remplir tous les champs");
+                return;
+            }
             
             auth.signInWithEmailAndPassword(email, password)
                 .then(() => {
@@ -410,7 +435,234 @@
         function signOut() {
             auth.signOut();
             currentReplyTo = null;
-            currentPmRecipient = null;
+        }
+
+        // ===== GESTION DES ONGLETS =====
+        function switchTab(tabId) {
+            // Désactive tous les onglets
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Active l'onglet sélectionné
+            document.querySelector(`.tab[onclick="switchTab('${tabId}')"]`).classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+            
+            // Charge les messages privés si c'est l'onglet sélectionné
+            if (tabId === 'private-messages') {
+                loadPrivateMessages();
+                loadAllUsers();
+                
+                // Réinitialise le compteur de messages non lus
+                unreadMessagesCount = 0;
+                updateUnreadCount();
+            }
+        }
+
+        function updateUnreadCount() {
+            const unreadCountElement = document.getElementById('unread-count');
+            if (unreadMessagesCount > 0) {
+                unreadCountElement.textContent = `(${unreadMessagesCount})`;
+                unreadCountElement.classList.remove('hidden');
+            } else {
+                unreadCountElement.classList.add('hidden');
+            }
+        }
+
+        // ===== GESTION DES MESSAGES PRIVÉS =====
+        function showNewMessageForm() {
+            document.getElementById('private-message-form').style.display = 'block';
+        }
+
+        function hideNewMessageForm() {
+            document.getElementById('private-message-form').style.display = 'none';
+            document.getElementById('private-message-input').value = '';
+            document.getElementById('recipient-select').value = '';
+        }
+
+        async function loadAllUsers() {
+            try {
+                const snapshot = await db.collection("users").get();
+                allUsers = [];
+                const select = document.getElementById('recipient-select');
+                select.innerHTML = '<option value="">Sélectionnez un destinataire</option>';
+                
+                snapshot.forEach(doc => {
+                    if (doc.id !== auth.currentUser.uid) {
+                        const userData = doc.data();
+                        allUsers.push({
+                            id: doc.id,
+                            email: userData.email
+                        });
+                        
+                        const option = document.createElement('option');
+                        option.value = doc.id;
+                        option.textContent = userData.email;
+                        select.appendChild(option);
+                    }
+                });
+            } catch (error) {
+                console.error("Erreur lors du chargement des utilisateurs: ", error);
+            }
+        }
+
+        async function sendPrivateMessage() {
+            const recipientId = document.getElementById('recipient-select').value;
+            const messageText = document.getElementById('private-message-input').value.trim();
+            
+            if (!recipientId || !messageText) {
+                alert("Veuillez sélectionner un destinataire et écrire un message");
+                return;
+            }
+            
+            try {
+                const recipient = allUsers.find(u => u.id === recipientId);
+                if (!recipient) {
+                    throw new Error("Destinataire introuvable");
+                }
+                
+                const messageData = {
+                    senderId: auth.currentUser.uid,
+                    senderEmail: auth.currentUser.email,
+                    recipientId: recipientId,
+                    recipientEmail: recipient.email,
+                    text: messageText,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    read: false
+                };
+                
+                await db.collection("privateMessages").add(messageData);
+                
+                // Réinitialise le formulaire
+                document.getElementById('private-message-input').value = '';
+                document.getElementById('recipient-select').value = '';
+                document.getElementById('private-message-form').style.display = 'none';
+                
+                // Recharge les messages
+                loadPrivateMessages();
+                
+                // Affiche un message de succès
+                const successMessage = document.createElement('div');
+                successMessage.textContent = "Message envoyé avec succès!";
+                successMessage.style.color = "green";
+                successMessage.style.marginTop = "10px";
+                document.getElementById('private-message-form').appendChild(successMessage);
+                
+                // Supprime le message après 3 secondes
+                setTimeout(() => {
+                    successMessage.remove();
+                }, 3000);
+            } catch (error) {
+                console.error("Erreur lors de l'envoi du message: ", error);
+                alert("Une erreur est survenue lors de l'envoi du message");
+            }
+        }
+
+        function loadPrivateMessages() {
+            const userId = auth.currentUser.uid;
+            const container = document.getElementById('private-messages-container');
+            container.innerHTML = "<p>Chargement des messages...</p>";
+            
+            // Messages reçus
+            db.collection("privateMessages")
+                .where("recipientId", "==", userId)
+                .orderBy("timestamp", "desc")
+                .onSnapshot(snapshot => {
+                    if (snapshot.empty) {
+                        container.innerHTML = "<p>Aucun message privé pour le moment.</p>";
+                        return;
+                    }
+                    
+                    container.innerHTML = "<h3>Messages reçus</h3>";
+                    
+                    let hasUnreadMessages = false;
+                    snapshot.forEach(doc => {
+                        const message = doc.data();
+                        displayPrivateMessage(doc.id, message, container, 'received');
+                        
+                        // Compte les messages non lus
+                        if (!message.read) {
+                            hasUnreadMessages = true;
+                        }
+                    });
+                    
+                    // Charge les messages envoyés
+                    loadSentMessages(container);
+                }, error => {
+                    console.error("Erreur lors du chargement des messages: ", error);
+                    container.innerHTML = "<p>Erreur lors du chargement des messages.</p>";
+                });
+        }
+
+        function loadSentMessages(container) {
+            const userId = auth.currentUser.uid;
+            
+            db.collection("privateMessages")
+                .where("senderId", "==", userId)
+                .orderBy("timestamp", "desc")
+                .get()
+                .then(snapshot => {
+                    if (!snapshot.empty) {
+                        const sentHeader = document.createElement('h3');
+                        sentHeader.textContent = "Messages envoyés";
+                        sentHeader.style.marginTop = "30px";
+                        container.appendChild(sentHeader);
+                        
+                        snapshot.forEach(doc => {
+                            const message = doc.data();
+                            displayPrivateMessage(doc.id, message, container, 'sent');
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error("Erreur lors du chargement des messages envoyés: ", error);
+                });
+        }
+
+        function displayPrivateMessage(messageId, message, container, type) {
+            const messageElement = document.createElement('div');
+            messageElement.className = `private-message ${type}`;
+            
+            if (type === 'received') {
+                messageElement.innerHTML = `
+                    <div class="sender"><i class="fas fa-user"></i> De: ${message.senderEmail}</div>
+                    <div class="timestamp">${formatDate(message.timestamp)}</div>
+                    ${!message.read ? '<div class="unread-badge"><i class="fas fa-envelope"></i></div>' : ''}
+                    <div class="message-text">${message.text}</div>
+                `;
+                
+                // Marquer comme lu si ce n'est pas déjà fait
+                if (!message.read) {
+                    db.collection("privateMessages").doc(messageId).update({
+                        read: true
+                    });
+                }
+            } else {
+                messageElement.innerHTML = `
+                    <div class="sender"><i class="fas fa-user"></i> À: ${message.recipientEmail}</div>
+                    <div class="timestamp">${formatDate(message.timestamp)}</div>
+                    <div class="message-text">${message.text}</div>
+                `;
+            }
+            
+            container.appendChild(messageElement);
+        }
+
+        // Surveille les nouveaux messages non lus
+        function watchForUnreadMessages() {
+            const userId = auth.currentUser?.uid;
+            if (!userId) return;
+            
+            db.collection("privateMessages")
+                .where("recipientId", "==", userId)
+                .where("read", "==", false)
+                .onSnapshot(snapshot => {
+                    unreadMessagesCount = snapshot.size;
+                    updateUnreadCount();
+                });
         }
 
         // ===== GESTION DES COMMENTAIRES =====
@@ -418,7 +670,10 @@
             const commentInput = document.getElementById('comment-input');
             const commentText = commentInput.value.trim();
             
-            if (!commentText) return;
+            if (!commentText) {
+                alert("Veuillez écrire un commentaire");
+                return;
+            }
             
             try {
                 if (currentReplyTo) {
@@ -426,6 +681,7 @@
                     const replyData = {
                         text: commentText,
                         author: auth.currentUser.email,
+                        authorId: auth.currentUser.uid,
                         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                         parentId: currentReplyTo
                     };
@@ -440,6 +696,7 @@
                     const commentData = {
                         text: commentText,
                         author: auth.currentUser.email,
+                        authorId: auth.currentUser.uid,
                         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                         likes: 0,
                         likedBy: []
@@ -552,10 +809,11 @@
                     <button onclick="replyToComment('${id}', '${comment.author}')">
                         <i class="fas fa-reply"></i> Répondre
                     </button>
-                    ${comment.author !== auth.currentUser.email ? 
-                      `<button onclick="startPrivateMessage('${comment.author}')">
-                        <i class="fas fa-envelope"></i> Message privé
-                      </button>` : ''}
+                    ${comment.authorId !== auth.currentUser?.uid ? 
+                        `<button onclick="startPrivateMessage('${comment.author}')" class="private-message-btn">
+                            <i class="fas fa-envelope"></i> Message privé
+                        </button>` : ''
+                    }
                 </div>
                 <div id="replies-${id}" class="replies-container"></div>
             `;
@@ -576,171 +834,17 @@
             container.appendChild(replyElement);
         }
 
-        // ===== MESSAGERIE PRIVÉE =====
-        function togglePrivateMessages() {
-            const commentsSection = document.getElementById('comments-section');
-            const pmSection = document.getElementById('private-messages-section');
+        function startPrivateMessage(email) {
+            switchTab('private-messages');
+            showNewMessageForm();
             
-            if (pmSection.style.display === 'none' || !pmSection.style.display) {
-                commentsSection.style.display = 'none';
-                pmSection.style.display = 'block';
-                loadUsersForPM();
-            } else {
-                commentsSection.style.display = 'block';
-                pmSection.style.display = 'none';
+            // Trouve l'utilisateur correspondant à l'email
+            const user = allUsers.find(u => u.email === email);
+            if (user) {
+                document.getElementById('recipient-select').value = user.id;
             }
         }
 
-        function loadUsersForPM() {
-            // Charger tous les utilisateurs qui ont posté des commentaires
-            db.collection("comments")
-                .get()
-                .then(snapshot => {
-                    const usersSet = new Set();
-                    snapshot.forEach(doc => {
-                        const comment = doc.data();
-                        if (comment.author !== auth.currentUser.email) {
-                            usersSet.add(comment.author);
-                        }
-                    });
-                    
-                    // Ajouter aussi les utilisateurs qui ont envoyé/reçu des messages
-                    db.collection("privateMessages")
-                        .where("participants", "array-contains", auth.currentUser.email)
-                        .get()
-                        .then(pmSnapshot => {
-                            pmSnapshot.forEach(doc => {
-                                const pm = doc.data();
-                                pm.participants.forEach(email => {
-                                    if (email !== auth.currentUser.email) {
-                                        usersSet.add(email);
-                                    }
-                                });
-                            });
-                            
-                            // Afficher la liste des utilisateurs
-                            const usersList = document.getElementById('pm-users');
-                            usersList.innerHTML = '';
-                            
-                            users = Array.from(usersSet).sort();
-                            users.forEach(user => {
-                                const userElement = document.createElement('div');
-                                userElement.className = 'pm-user';
-                                userElement.textContent = user;
-                                userElement.onclick = () => loadPrivateMessages(user);
-                                usersList.appendChild(userElement);
-                            });
-                        });
-                })
-                .catch(error => {
-                    console.error("Erreur lors du chargement des utilisateurs: ", error);
-                });
-        }
-
-        function startPrivateMessage(email) {
-            togglePrivateMessages();
-            loadPrivateMessages(email);
-        }
-
-        function loadPrivateMessages(recipientEmail) {
-            currentPmRecipient = recipientEmail;
-            
-            // Mettre en surbrillance l'utilisateur sélectionné
-            const userElements = document.querySelectorAll('.pm-user');
-            userElements.forEach(el => {
-                if (el.textContent === recipientEmail) {
-                    el.classList.add('active');
-                } else {
-                    el.classList.remove('active');
-                }
-            });
-            
-            // Charger les messages avec cet utilisateur
-            db.collection("privateMessages")
-                .where("participants", "array-contains", auth.currentUser.email)
-                .orderBy("lastUpdated", "desc")
-                .get()
-                .then(snapshot => {
-                    let conversationId = null;
-                    const messagesContainer = document.getElementById('pm-messages');
-                    messagesContainer.innerHTML = '';
-                    
-                    // Trouver la conversation avec ce destinataire
-                    snapshot.forEach(doc => {
-                        const pm = doc.data();
-                        if (pm.participants.includes(recipientEmail)) {
-                            conversationId = doc.id;
-                            
-                            // Charger les messages de cette conversation
-                            db.collection("privateMessages").doc(doc.id).collection("messages")
-                                .orderBy("timestamp")
-                                .onSnapshot(messagesSnapshot => {
-                                    messagesContainer.innerHTML = '';
-                                    messagesSnapshot.forEach(msgDoc => {
-                                        const message = msgDoc.data();
-                                        displayPrivateMessage(message);
-                                    });
-                                    
-                                    // Faire défiler vers le bas
-                                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-                                });
-                        }
-                    });
-                    
-                    // Si aucune conversation existante, créer un nouvel ID
-                    if (!conversationId) {
-                        conversationId = db.collection("privateMessages").doc().id;
-                        db.collection("privateMessages").doc(conversationId).set({
-                            participants: [auth.currentUser.email, recipientEmail],
-                            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-                    }
-                    
-                    // Mettre à jour le formulaire pour envoyer à cette conversation
-                    document.getElementById('pm-form').dataset.conversationId = conversationId;
-                });
-        }
-
-        function displayPrivateMessage(message) {
-            const messagesContainer = document.getElementById('pm-messages');
-            const messageElement = document.createElement('div');
-            
-            messageElement.className = `pm-message ${message.sender === auth.currentUser.email ? 'sent' : 'received'}`;
-            messageElement.innerHTML = `
-                <div class="pm-message-author">${message.sender === auth.currentUser.email ? 'Vous' : message.sender}</div>
-                <div>${message.text}</div>
-                <div class="pm-message-time">${formatDate(message.timestamp)}</div>
-            `;
-            
-            messagesContainer.appendChild(messageElement);
-        }
-
-        function sendPrivateMessage() {
-            const input = document.getElementById('pm-input');
-            const text = input.value.trim();
-            const conversationId = document.getElementById('pm-form').dataset.conversationId;
-            
-            if (!text || !conversationId || !currentPmRecipient) return;
-            
-            db.collection("privateMessages").doc(conversationId).collection("messages").add({
-                sender: auth.currentUser.email,
-                recipient: currentPmRecipient,
-                text: text,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            }).then(() => {
-                // Mettre à jour la date de dernière modification de la conversation
-                db.collection("privateMessages").doc(conversationId).update({
-                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                
-                input.value = '';
-            }).catch(error => {
-                console.error("Erreur lors de l'envoi du message: ", error);
-                alert("Une erreur est survenue lors de l'envoi du message");
-            });
-        }
-
-        // ===== UTILITAIRES =====
         function formatDate(timestamp) {
             if (!timestamp) return "maintenant";
             const date = timestamp.toDate();
@@ -757,8 +861,7 @@
         auth.onAuthStateChanged(user => {
             const statusElement = document.getElementById('user-status');
             const authForms = document.getElementById('auth-forms');
-            const commentsSection = document.getElementById('comments-section');
-            const pmSection = document.getElementById('private-messages-section');
+            const mainSection = document.getElementById('main-section');
             
             if (user) {
                 statusElement.innerHTML = `
@@ -766,20 +869,28 @@
                     <a href="#" onclick="signOut()"><i class="fas fa-sign-out-alt"></i> Déconnexion</a>
                 `;
                 authForms.classList.add('hidden');
-                commentsSection.classList.remove('hidden');
-                pmSection.style.display = 'none';
+                mainSection.classList.remove('hidden');
+                
+                // Enregistre l'utilisateur dans la collection users s'il n'existe pas déjà
+                db.collection("users").doc(user.uid).set({
+                    email: user.email,
+                    lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
+                
+                // Charge les commentaires
                 loadComments();
+                
+                // Surveille les messages non lus
+                watchForUnreadMessages();
             } else {
                 statusElement.innerHTML = `
                     <i class="fas fa-exclamation-circle"></i> Vous n'êtes pas connecté. 
                     Inscrivez-vous ou connectez-vous pour participer aux discussions.
                 `;
                 authForms.classList.remove('hidden');
-                commentsSection.classList.add('hidden');
-                pmSection.style.display = 'none';
-                currentPmRecipient = null;
+                mainSection.classList.add('hidden');
             }
         });
     </script>
 </body>
-</html>
+    </html
